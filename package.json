@@ -4,7 +4,7 @@
   "version": "0.0.1",
   "type": "module",
   "scripts": {
-    "dev": "vite dev",
+    "dev": "nix run .#dev-server",
     "build": "vite build",
     "preview": "vite preview",
     "prepare": "svelte-kit sync || echo ''",
@@ -54,6 +54,7 @@
   },
   "dependencies": {
     "@node-rs/argon2": "^2.0.2",
-    "better-sqlite3": "^12.4.1"
+    "better-sqlite3": "^12.4.1",
+    "bullmq": "^5.61.0"
   }
 }
