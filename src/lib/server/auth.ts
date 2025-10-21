@@ -93,7 +93,7 @@ export function requireLogin() {
   let locals = getRequestEvent().locals;
 
   if (!locals.user) {
-    return redirect(302, '/demo/lucia/login');
+    return redirect(302, '/login');
   }
 
   return locals.user;

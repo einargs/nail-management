@@ -3,6 +3,7 @@
   import favicon from '$lib/assets/favicon.svg';
   import * as NavigationMenu from "$lib/components/ui/navigation-menu/index.js";
   import type {LayoutProps} from "./$types";
+  import { Toaster } from 'svelte-sonner';
 
   let { children, data }: LayoutProps = $props();
 </script>
@@ -46,6 +47,8 @@
 -->
   </NavigationMenu.List>
 </NavigationMenu.Root>
+
+<Toaster />
 <div class="flex flex-col items-center w-screen">
   {@render children?.()}
 </div>

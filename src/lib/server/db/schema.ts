@@ -21,7 +21,7 @@ export const user = sqliteTable('user', {
 
 export const session = sqliteTable('session', {
   id: text('id').primaryKey(),
-  userId: integer()
+  userId: text()
     .notNull()
     .references(() => user.id),
   expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull()
@@ -35,9 +35,10 @@ export type User = typeof user.$inferSelect;
 export const client = sqliteTable('client', {
   id: autoId(),
   name: text(),
-  // email
-  // phone
+  email: text(),
+  phone: text(),
 });
+
 // clients need reminders
 
 export type Client = typeof client.$inferSelect;
@@ -63,6 +64,7 @@ export const item = sqliteTable('item', {
 });
 
 export type Item = typeof item.$inferSelect;
+
 // Does amber just want to note what items ran out?
 // or does she want to track how much of every item
 // was used
