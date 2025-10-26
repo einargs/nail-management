@@ -14,6 +14,7 @@
   import {zodClient } from "sveltekit-superforms/adapters";
   import ClientForm from "./client-form.svelte";
   import ItemForm from "./item-form.svelte";
+  import BookingTest from "./booking-test.svelte";
 
 
   let { data }: PageProps = $props();
@@ -22,7 +23,10 @@
 
 <h1>Dashboard</h1>
 
-
+<BookingTest />
+<form method="POST" action="?/addAppointment">
+  <button>submit</button>
+</form>
 <ClientForm form={data.addClientForm} clients={data.clients} />
 <ItemForm form={data.addItemForm} items={data.items} updateItemForm={data.updateItemForm} />
 

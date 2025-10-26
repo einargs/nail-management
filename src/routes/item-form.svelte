@@ -1,5 +1,6 @@
 <script lang="ts">
   import { Button, buttonVariants } from "$lib/components/ui/button/index.js";
+  import * as Table from "$lib/components/ui/table/index.js";
   import * as Dialog from "$lib/components/ui/dialog/index.js";
   import * as Form from "$lib/components/ui/form/index.js";
   import { Input } from "$lib/components/ui/input/index.js";
@@ -69,6 +70,12 @@
       console.log("initEditForm data", $editDataForm);
     }
   }
+
+  let dollarFormatter = new Intl.NumberFormat("en-US", {
+    style: "currency", currency: "USD", maximumFractionDigits: 2,
+    minimumFractionDigits: 2
+  });
+  let costFormat = (cost: number) => dollarFormatter.format(cost/100);
 </script>
 
 <!--
@@ -164,31 +171,38 @@
   </Dialog.Root>
 {/snippet}
 
-<div>
-  <div>
+<div class="w-full flex flex-col items-center">
+  <div class="w-[50vw]">
   <SuperDebug data={$editDataForm} />
   </div>
   <div>{JSON.stringify($editErrors)}</div>
   <!-- TODO: convert these into tables -->
-  <section class="flex-col p-15 w-full gap-4">
+  <section class="flex flex-col p-15 w-full gap-4">
     <h1 class="font-medium text-xl">Items</h1>
-    {#each items as item, i (item.id)}
-      <Card.Root>
-        <Card.Header>
-          <Card.Title>{item.name}</Card.Title>
-          <Card.Description>{item.cost} {item.quantity}</Card.Description>
-          <Card.Action>
-            {@render EditDialog(item, i)}
-          </Card.Action>
-        </Card.Header>
-        <Card.Content>
-          <p>Card Content</p>
-        </Card.Content>
-        <Card.Footer>
-          <p>Card Footer</p>
-        </Card.Footer>
-      </Card.Root>
-    {/each}
+    <Table.Root>
+      <Table.Header>
+        <Table.Row>
+          <Table.Head class="w-[100px]">Item</Table.Head>
+          <Table.Head>Cost</Table.Head>
+          <Table.Head>Quantity</Table.Head>
+          <Table.Head>Reorder Threshold</Table.Head>
+          <Table.Head><!-- Empty so the highlighting looks right --></Table.Head>
+        </Table.Row>
+      </Table.Header>
+      <Table.Body>
+        {#each items as item, i (item.id)}
+          <Table.Row>
+            <Table.Cell class="font-medium">{item.name}</Table.Cell>
+            <Table.Cell>{item.quantity}</Table.Cell>
+            <Table.Cell>{costFormat(item.cost)}</Table.Cell>
+            <Table.Cell>{item.reorderThreshold}</Table.Cell>
+            <Table.Cell class="text-center">
+              {@render EditDialog(item, i)}
+            </Table.Cell>
+          </Table.Row>
+        {/each}
+      </Table.Body>
+    </Table.Root>
   </section>
 
   <section class="w-full px-10 flex flex-col items-center gap-4">

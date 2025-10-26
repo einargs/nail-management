@@ -3,11 +3,12 @@ import { fail, redirect } from '@sveltejs/kit';
 import * as table from '$lib/server/db/schema';
 import { message, superValidate } from 'sveltekit-superforms';
 import { zod4 } from 'sveltekit-superforms/adapters';
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import * as schemas from "./formSchema";
 
 import type {PageServerLoad, Actions } from "./$types";
 import {requireLogin} from "$lib/server/auth";
+import { square, LOCATION_ID } from "$lib/server/square";
 
 
 export const load: PageServerLoad = async () => {
@@ -30,15 +31,48 @@ export const load: PageServerLoad = async () => {
     //quantity: 10,
     //reorderThreshold: 2
   }, zod4(schemas.updateItemSchema));
-  const clients = await db.select().from(table.client);
+  const clientsR = await db.query.client.findMany({
+    with: { appointment: true }
+  });
+  let clients = clientsR.map(client => ({
+    id: client.id,
+    email: client.email,
+    phone: client.phone,
+    name: client.name
+  }))
   const items = await db.select().from(table.item);
-  console.log("items", items);
+  /*let services = await square.catalog.searchItems({
+    productTypes: [ "APPOINTMENTS_SERVICE" ]
+  });
+  let hairColor = services.items![0];
+  */
 
-  return { user, clients, items, addClientForm, addItemForm, updateItemForm };
+  return { user, clients, items, addClientForm, addItemForm, updateItemForm,   };
 };
 
 
 export const actions: Actions = {
+  // you need the square plus to cancel bookings or send reminders
+  addBooking: async (event) => {
+    /*
+    let services = await square.catalog.searchItems({
+      productTypes: [ "APPOINTMENTS_SERVICE" ]
+    });
+    let hairColor = services.items![0];
+    console.log(hairColor);
+    */
+    //const { result: { booking } } = await square.bookings.createBooking
+
+
+    //console.log(services.items);
+  },
+  addAppointment: async (event) => {
+    await db.insert(table.appointment).values({
+      clientId: 1,
+      date: sql`(current_timestamp)`
+    })
+    console.log("called");
+  },
   updateItem: async (event) => {
     console.log("update Item action called");
     const form = await superValidate(event.request, zod4(schemas.updateItemSchema));

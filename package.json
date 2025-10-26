@@ -57,6 +57,7 @@
     "@node-rs/argon2": "^2.0.2",
     "better-sqlite3": "^12.4.1",
     "bullmq": "^5.61.0",
+    "square": "^43.1.1",
     "svelte-sonner": "^1.0.5",
     "sveltekit-superforms": "^2.27.4",
     "zod": "^4.1.12"
