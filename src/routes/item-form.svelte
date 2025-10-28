@@ -12,7 +12,7 @@
     type Infer, superForm
   } from "sveltekit-superforms";
   import SuperDebug from "sveltekit-superforms";
-  import {zodClient } from "sveltekit-superforms/adapters";
+  import { zod4Client } from "sveltekit-superforms/adapters";
   import { type Item } from "$lib/server/db/schema";
 
   let { form: dataForm, items }: {
@@ -21,7 +21,7 @@
     items: Item[]
   } = $props();
   const form = superForm(dataForm, {
-    validators: zodClient(addItemSchema),
+    validators: zod4Client(addItemSchema),
     onUpdated: ({ form }) => {
       if (form.valid) {
         toast.success(`You submitted ${JSON.stringify(form.data, null, 2)}`);
@@ -36,7 +36,7 @@
   let editingItemIndex = $state(0);
 
   const editForm = superForm({} as SuperValidated<Infer<typeof updateItemSchema>>, {
-    validators: zodClient(updateItemSchema),
+    validators: zod4Client(updateItemSchema),
     onSubmit({formData}) {
       console.log("submitting edit form", formData);
     },
@@ -61,7 +61,7 @@
     console.log("openend", item, open);
     if (open) {
       editingItemIndex = index;
-      $editFormId = ""+item.id;
+      $editFormId = item.id;
       $editDataForm.id = item.id;
       $editDataForm.name = item.name;
       $editDataForm.cost = item.cost;

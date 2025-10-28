@@ -6,6 +6,6 @@
 
 <section>
 <form method="POST" action="?/addBooking">
-<Button type="submit">create</Button>
+<Button type="submit">Run addBooking</Button>
 </form>
 </section>

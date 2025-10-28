@@ -3,8 +3,8 @@ import { fail, redirect } from '@sveltejs/kit';
 import * as table from '$lib/server/db/schema';
 import { message, superValidate } from 'sveltekit-superforms';
 import { zod4 } from 'sveltekit-superforms/adapters';
-import { eq, sql } from "drizzle-orm";
 import * as schemas from "./formSchema";
+import * as serverData from "$lib/server/data";
 
 import type {PageServerLoad, Actions } from "./$types";
 import {requireLogin} from "$lib/server/auth";
@@ -16,7 +16,7 @@ export const load: PageServerLoad = async () => {
   const addClientForm = await superValidate({
     name: "test",
     email: "etest@gmail.com",
-    phone: "1234567000",
+    phone: "408-647-4636",
   }, zod4(schemas.addClientSchema));
   const addItemForm = await superValidate({
     name: "test item 1",
@@ -38,8 +38,9 @@ export const load: PageServerLoad = async () => {
     id: client.id,
     email: client.email,
     phone: client.phone,
-    name: client.name
-  }))
+    name: client.name,
+    squareId: client.squareId,
+  }));
   const items = await db.select().from(table.item);
   /*let services = await square.catalog.searchItems({
     productTypes: [ "APPOINTMENTS_SERVICE" ]
@@ -67,11 +68,14 @@ export const actions: Actions = {
     //console.log(services.items);
   },
   addAppointment: async (event) => {
+    /*
+    await db.select(table.client)
     await db.insert(table.appointment).values({
       clientId: 1,
-      date: sql`(current_timestamp)`
+      date: sql`now()`
     })
     console.log("called");
+    */
   },
   updateItem: async (event) => {
     console.log("update Item action called");
@@ -80,12 +84,12 @@ export const actions: Actions = {
     if (!form.valid) return fail(500, { updateItemForm: form });
 
     try {
-      let result = await db.update(table.item).set({
+      let result = await serverData.updateItem(form.data.id, {
         reorderThreshold: form.data.reorderThreshold,
         cost: form.data.cost,
         quantity: form.data.quantity,
         name: form.data.name
-      }).where(eq(table.item.id, form.data.id));
+      });
       console.log("updated item", result);
       // todo: throw error if it didn't change anything.
     } catch (error) {
@@ -100,9 +104,7 @@ export const actions: Actions = {
     if (!form.valid) return fail(500, { addItemForm: form });
 
     try {
-      let result = await db.insert(table.item).values({
-        ...form.data
-      });
+      let result = serverData.createItem(form.data);
       console.log("add item", result);
     } catch (error) {
       console.error("error adding item", error);
@@ -116,7 +118,7 @@ export const actions: Actions = {
     if (!form.valid) return fail(500, { addClientForm: form });
 
     try {
-      let result = await db.insert(table.client).values({
+      let result = await serverData.createCustomer({
         name: form.data.name,
         email: form.data.email,
         phone: form.data.phone

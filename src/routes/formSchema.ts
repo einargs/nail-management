@@ -17,7 +17,7 @@ export const addItemSchema = z.object({
 
 
 export const updateItemSchema = z.object({
-  id: z.int(),
+  id: z.uuid(),
   cost: z.int(),
   name: z.string(),
   quantity: z.int(),

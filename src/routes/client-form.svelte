@@ -10,7 +10,7 @@
     type Infer, superForm
   } from "sveltekit-superforms";
   import SuperDebug from "sveltekit-superforms";
-  import {zodClient } from "sveltekit-superforms/adapters";
+  import {zod4Client } from "sveltekit-superforms/adapters";
   import { type Client } from "$lib/server/db/schema";
 
 
@@ -19,7 +19,7 @@
     clients: Client[]
   } = $props();
   const form = superForm(dataForm, {
-    validators: zodClient(addClientSchema),
+    validators: zod4Client(addClientSchema),
     onUpdate: ({ form }) => {
       if (form.valid) {
         toast.success(`You submitted ${JSON.stringify(form.data, null, 2)}`);
