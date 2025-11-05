@@ -19,6 +19,18 @@
           imports = [
             inputs.services-flake.processComposeModules.default
           ];
+          services.postgres."pg1" = {
+            enable = true;
+            initialScript.before = ''
+              CREATE USER dev WITH password 'dev';
+            '';
+            initialDatabases = [
+              {
+                name = "mydb";
+                #schemas = [ ./scripts/db.sql ];
+              }
+            ];
+          };
           services.redis."r1" = {
             enable = true;
             port = 6379;
@@ -31,9 +43,12 @@
               text = "npx vite dev";
             };
             depends_on."r1".condition = "process_healthy";
+            depends_on."pg1".condition = "process_healthy";
           };
         };
         devShells.default = with pkgs; mkShell {
+          # To run commands interacting with the database, just do so from a
+          # different terminal; the services aren't isolated.
           inputsFrom = [
             config.process-compose."dev-server".services.outputs.devShell
           ];

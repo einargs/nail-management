@@ -53,9 +53,25 @@ export const service = pgTable('service', {
 
 export type Service = typeof service.$inferSelect;
 
+export const address = pgTable('address', {
+  id: uuid().primaryKey().notNull(),
+  addressLine1: text().notNull(),
+  addressLine2: text().notNull(),
+  /// locality in square
+  city: text().notNull(),
+  /// administrativeDistrictLevel1 in square
+  state: text().notNull(),
+  //country
+  postalCode: text().notNull(),
+});
+
+export type Address = typeof address.$inferSelect;
+export type AddressBase = Omit<Address, "id">;
+
 export const appointment = pgTable('appointment', {
   id: uuid().primaryKey(),
   clientId: uuid().notNull().references(() => client.id),
+  addressId: uuid().notNull().references(() => address.id),
   date: timestamp().notNull(),
   serviceId: uuid().notNull().references(() => service.id),
   durationMinutes: integer().notNull(),
@@ -65,7 +81,15 @@ export const appointmentRelations = relations(appointment, ({one}) => ({
   client: one(client, {
     fields: [appointment.clientId],
     references: [client.id]
-  })
+  }),
+  address: one(address, {
+    fields: [appointment.addressId],
+    references: [address.id]
+  }),
+  service: one(service, {
+    fields: [appointment.serviceId],
+    references: [service.id]
+  }),
 }));
 
 export type Appointment = typeof appointment.$inferSelect;

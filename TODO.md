@@ -13,3 +13,11 @@ Tables
 - appointments
   - client
 
+
+Features
+- reminders
+  - twilio
+  - the bullmq
+- editing
+  - headless CMS
+    - let's go with strapi
