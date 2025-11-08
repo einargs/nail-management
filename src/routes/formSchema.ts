@@ -6,8 +6,6 @@ export const addClientSchema = z.object({
   phone: z.string() // make phone number validator
 });
 
-export type AddClientSchema = typeof addClientSchema;
-
 export const addItemSchema = z.object({
   name: z.string(),
   cost: z.int(),

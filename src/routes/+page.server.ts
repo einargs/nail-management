@@ -9,6 +9,7 @@ import * as serverData from "$lib/server/data";
 import type {PageServerLoad, Actions } from "./$types";
 import {requireLogin} from "$lib/server/auth";
 import { square, LOCATION_ID } from "$lib/server/square";
+import * as strapi from "$lib/server/strapi";
 
 
 export const load: PageServerLoad = async () => {
@@ -47,6 +48,14 @@ export const load: PageServerLoad = async () => {
   });
   let hairColor = services.items![0];
   */
+  try {
+  const res = await fetch('http://localhost:1337/api/home-page');
+
+  const strapi = await res.json();
+  console.log(strapi);
+  } catch (e) {
+    console.error(e);
+  }
 
   return { user, clients, items, addClientForm, addItemForm, updateItemForm,   };
 };

@@ -8,7 +8,7 @@
     services-flake.url = "github:juspay/services-flake";
 
   };
-  outputs = { flake-parts, ...}@inputs:
+  outputs = { self, flake-parts, nixpkgs, ...}@inputs:
     flake-parts.lib.mkFlake { inherit inputs; } {
       imports = [
         inputs.process-compose-flake.flakeModule
@@ -36,15 +36,50 @@
             port = 6379;
             #unixSocket = "./redis.sock";
           };
+          settings.processes.strapi-dev-server = {
+            depends_on."pg1".condition = "process_healthy";
+            command = pkgs.writeShellApplication {
+              name = "run-strapi";
+              runtimeInputs = with pkgs; [ nodejs_22 openssl ];
+              text = ''
+              cd ./strapi
+              npm run dev
+              '';
+            };
+          };
           settings.processes.sveltekit-dev-server = {
             command = pkgs.writeShellApplication {
               name = "run-dev";
-              runtimeInputs = with pkgs; [ sqlite nodejs_22 openssl ];
+              runtimeInputs = with pkgs; [ nodejs_22 openssl ];
               text = "npx vite dev";
             };
+            depends_on."strapi-dev-server".condition = "process_healthy";
             depends_on."r1".condition = "process_healthy";
             depends_on."pg1".condition = "process_healthy";
           };
+        };
+        packages.strapi-server = pkgs.buildNpmPackage {
+          pname = "strapi-server";
+          version = "0.0.1";
+          src = ./strapi;
+          npmDepsHash = "sha256-R+V6KEw/9YnqVil2t/6mXDQgAEUBOARdGRDylC0BIDE=";
+          npmFlags = [ "--legacy-peer-deps" ];
+        };
+        packages.web-server = pkgs.buildNpmPackage {
+          pname = "web-server";
+          version = "0.0.1";
+          src = ./.;
+          npmDepsHash = "sha256-lC29Z1RADZpUR8hfA2W90oC+o2bVglxPw10ToFFzJz8=";
+          #npmPackFlags = [ "--ignore-scripts" ];
+          #npmBuildScript = "npx vite build";
+          buildPhase = ''
+          npm run build
+          '';
+          installPhase = ''
+            mkdir -p $out
+            cp -r * $out/
+          '';
+          #dontNpmBuild = true;
         };
         devShells.default = with pkgs; mkShell {
           # To run commands interacting with the database, just do so from a
@@ -52,7 +87,10 @@
           inputsFrom = [
             config.process-compose."dev-server".services.outputs.devShell
           ];
-#          shellHook = ''
+         shellHook = ''
+         source ./.env
+         PS_CONNECT=psql $DATABASE_URL
+         '';
 #
 #        ${bg_service} &
 #        BG_PID=$!
@@ -60,6 +98,7 @@
 #        trap "kill -9 $BG_PID" EXIT
 #          ''
           buildInputs = [
+            prefetch-npm-deps
             nodePackages.typescript-language-server
             firebase-tools
             sqlite
@@ -73,6 +112,54 @@
           ];
         };
       };
+      # To deploy we're going to have a nixos config
+      flake.nixosConfigurations.prod-server = let 
+        system = "x86_64-linux";
+      in nixpkgs.lib.nixosSystem {
+        inherit system;
+        modules = [
+          ./nixos-config.nix
+          {
+
+  systemd.services.strapi-server = {
+      description = "Strapi Server";
+      requires = [ "postgresql.service" ];
+      wantedBy = [ "multi-user.target" ]; # Ensures the service starts with the system
+      after = [ "network.target" ];       # Ensures network is available before starting
+      serviceConfig = {
+        Type = "simple";                  # Or "forking", "oneshot", etc. depending on your service
+        #User = "youruser";                # The user the service runs as
+        #Group = "yourgroup";              # The group the service runs as
+        ExecStart = ''
+          ${self.packages.${system}.strapi-server}/bin/strapi-server
+        '';
+        # Or, if you have a script: ExecStart = "${pkgs.writeScript "my-script" ''#!${pkgs.bash}/bin/bash\n/path/to/your/script.sh''}";
+      };
+  };
+  systemd.services.web-server = {
+      description = "Production Server";
+      requires = [ "postgresql.service" "r1.service"
+      "strapi-server.service"
+      ];
+      wantedBy = [ "multi-user.target" ]; # Ensures the service starts with the system
+      after = [ "network.target" ];       # Ensures network is available before starting
+
+      serviceConfig = {
+        Type = "simple";                  # Or "forking", "oneshot", etc. depending on your service
+        #User = "youruser";                # The user the service runs as
+        #Group = "yourgroup";              # The group the service runs as
+        ExecStart = ''
+          ${self.packages.${system}.web-server}/bin/web-server
+        '';
+        # Or, if you have a script: ExecStart = "${pkgs.writeScript "my-script" ''#!${pkgs.bash}/bin/bash\n/path/to/your/script.sh''}";
+      };
+    };
+          }
+        ];
+
+
+        
+        };
     };
 
 
