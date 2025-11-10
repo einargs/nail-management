@@ -4,6 +4,14 @@ You need Square Appointments Plus to cancel bookings programatically
 or send confirmations using square.
 
 
+Cool platform for error logging? https://docs.sentry.io/platforms/javascript/guides/svelte/
+I think I'd rather just use logs.
+
+
+Tool for moving strapi data: https://docs.strapi.io/cms/data-management/transfer
+
+Strapi CORS
+- need to setup for the hosted thing
 
 Tables
 - clients

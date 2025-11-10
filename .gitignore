@@ -27,3 +27,9 @@ vite.config.ts.timestamp-*
 
 # development service data
 data
+
+# VM storage
+*.qcow2
+
+# VM build output
+/result

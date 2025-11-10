@@ -11,10 +11,10 @@
   },
   "pluginOptions": {},
   "attributes": {
-    "Introduction": {
+    "introduction": {
       "type": "richtext"
     },
-    "Splash": {
+    "splash": {
       "type": "media",
       "multiple": false,
       "allowedTypes": [
@@ -24,7 +24,7 @@
         "audios"
       ]
     },
-    "Logo": {
+    "logo": {
       "type": "media",
       "multiple": false,
       "allowedTypes": [
@@ -34,18 +34,15 @@
         "audios"
       ]
     },
-    "Gallery": {
+    "gallery": {
       "type": "media",
       "multiple": true,
       "allowedTypes": [
         "images"
       ]
     },
-    "Sanitation": {
+    "body": {
       "type": "richtext"
-    },
-    "Services": {
-      "type": "blocks"
     }
   }
 }

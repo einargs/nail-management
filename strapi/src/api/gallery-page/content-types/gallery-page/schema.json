@@ -11,7 +11,7 @@
   },
   "pluginOptions": {},
   "attributes": {
-    "Images": {
+    "images": {
       "type": "media",
       "multiple": true,
       "allowedTypes": [

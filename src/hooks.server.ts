@@ -1,5 +1,13 @@
-import type { Handle } from '@sveltejs/kit';
+import type { Handle, ServerInit } from '@sveltejs/kit';
 import * as auth from '$lib/server/auth';
+import { runMigration } from "$lib/server/db";
+
+
+
+const init: ServerInit = async () => {
+  // We are programatically applying the migrations when the server starts.
+  await runMigration();
+};
 
 const handleAuth: Handle = async ({ event, resolve }) => {
   const sessionToken = event.cookies.get(auth.sessionCookieName);

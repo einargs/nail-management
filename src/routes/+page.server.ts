@@ -49,12 +49,10 @@ export const load: PageServerLoad = async () => {
   let hairColor = services.items![0];
   */
   try {
-  const res = await fetch('http://localhost:1337/api/home-page');
-
-  const strapi = await res.json();
-  console.log(strapi);
+    const res = await strapi.getHomePage();
+    console.log(res);
   } catch (e) {
-    console.error(e);
+    console.error("strapi error", e);
   }
 
   return { user, clients, items, addClientForm, addItemForm, updateItemForm,   };
