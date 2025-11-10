@@ -73,7 +73,7 @@ const client = () => strapi({
   auth: env.STRAPI_READ_TOKEN,
 });
 
-async function getSinglePage<T extends z.core.$ZodShape>(endpoint: string, populate: string[], parser: z.ZodObject<T>): Promise<z.infer<z.ZodObject<T>>> {
+async function getSinglePage<T extends z.core.$ZodShape>(endpoint: string, parser: z.ZodObject<T>): Promise<z.infer<z.ZodObject<T>>> {
   let body;
   try {
     // we have to include ?populate=* to get all media fields one level down.
@@ -89,4 +89,4 @@ async function getSinglePage<T extends z.core.$ZodShape>(endpoint: string, popul
   }
 }
 
-export const getHomePage = () => getSinglePage("home-page", ["gallery", "splash","logo"], HomePageData);
+export const getHomePage = () => getSinglePage("home-page", HomePageData);
