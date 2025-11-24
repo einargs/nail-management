@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+/* https://icon-sets.iconify.design/material-symbols/ */
+/* https://iconify.design/docs/usage/css/tailwind/tailwind4/ */
+@plugin "@iconify/tailwind4";
+
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
