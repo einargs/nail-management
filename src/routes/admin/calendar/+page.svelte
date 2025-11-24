@@ -27,7 +27,7 @@
 	let options = {
     headerToolbar: { center: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek' },
 		initialView: 'dayGridMonth',
-    events: "/calendar/feed",
+    events: "/admin/calendar/feed",
 		plugins: [daygridPlugin, timegridPlugin, listPlugin, interactionPlugin],
     dateClick(info: DateClickArg) {
       let view = info.view;

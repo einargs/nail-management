@@ -1,6 +1,7 @@
 <script lang="ts">
   import * as NavigationMenu from "$lib/components/ui/navigation-menu/index.js";
   import type {LayoutProps} from "./$types";
+  import * as common from "$lib/common";
 
   let { children, data }: LayoutProps = $props();
 </script>
@@ -18,6 +19,8 @@
   <NavigationMenu.List class="items-start group flex flex-row justify-start gap-2 items-center">
     {@render PageLink("Main", "/")}
     {@render PageLink("Admin", "/admin")}
+    {@render PageLink("Edit Website", common.strapiURL)}
+    {@render PageLink("Calendar", "/admin/calendar")}
     {#if data.user}
       <NavigationMenu.Item>
         <NavigationMenu.Link class="text-lg font-medium hover:bg-accent">

@@ -22,7 +22,7 @@ export const actions: Actions = {
     await auth.invalidateSession(event.locals.session.id);
     auth.deleteSessionTokenCookie(event);
 
-    return redirect(302, '/login');
+    return redirect(302, '/admin/login');
   },
   login: async (event) => {
     const formData = await event.request.formData();
