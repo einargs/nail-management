@@ -11,17 +11,41 @@
   },
   "pluginOptions": {},
   "attributes": {
-    "Cost": {
-      "type": "decimal"
+    "definedPrice": {
+      "type": "boolean",
+      "required": true
     },
-    "Title": {
+    "cost": {
+      "type": "decimal",
+      "conditions": {
+        "visible": {
+          "==": [
+            {
+              "var": "definedPrice"
+            },
+            true
+          ]
+        }
+      }
+    },
+    "title": {
       "type": "string",
       "required": true
     },
-    "Description": {
-      "type": "string",
+    "description": {
+      "type": "text",
       "required": true,
       "unique": false
+    },
+    "image": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
     }
   }
 }

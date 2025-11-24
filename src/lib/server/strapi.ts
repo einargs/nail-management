@@ -31,6 +31,8 @@ const ImageFormat = z.object({
   //sizeInBytes: z.number()
 });
 
+export type ImageFormat = z.infer<typeof ImageFormat>;
+
 const Image = z.object({
   ...docShared,
   ...imageShared,
@@ -47,22 +49,32 @@ const Image = z.object({
   }),
 });
 
+export type StrapiImage = z.infer<typeof Image>;
+
 const HomePageData = z.object({
   ...docShared,
   // markdown
-  introduction: z.string().nullable(),
+  introduction: z.string(),
   // markdown
-  body: z.string().nullable(),
+  body: z.string(),
   // if this is null, populate failed.
   // or it was never initialized.
   // https://docs.strapi.io/cms/api/rest/populate-select
   // https://docs.strapi.io/cms/api/rest/guides/understanding-populate
   gallery: z.preprocess((val) => val === null ? [] : val, z.array(Image)),
-  splash: Image.nullable(),
-  logo: Image.nullable(),
+  splash: Image,
+  logo: Image,
 });
 
 export type HomePageData = z.infer<typeof HomePageData>;
+
+const Service = z.object({
+  title: z.string(),
+  description: z.string(),
+  cost: z.number().nullable(),
+  definedPrice: z.boolean(),
+  image: Image.nullable(),
+});
 
 // If we initialize it outside, it gets initialized during the build,
 // and throws an error because bad auth.
@@ -73,7 +85,7 @@ const client = () => strapi({
   auth: env.STRAPI_READ_TOKEN,
 });
 
-async function getSinglePage<T extends z.core.$ZodShape>(endpoint: string, parser: z.ZodObject<T>): Promise<z.infer<z.ZodObject<T>>> {
+async function getSinglePage<T extends z.ZodTypeAny>(endpoint: string, parser: T): Promise<z.infer<T>> {
   let body;
   try {
     // we have to include ?populate=* to get all media fields one level down.
@@ -90,3 +102,4 @@ async function getSinglePage<T extends z.core.$ZodShape>(endpoint: string, parse
 }
 
 export const getHomePage = () => getSinglePage("home-page", HomePageData);
+export const getServices = () => getSinglePage("services", z.array(Service));

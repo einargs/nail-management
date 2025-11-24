@@ -10,6 +10,13 @@
 	}: WithElementRef<HTMLAttributes<HTMLDivElement>> = $props();
 </script>
 
+    <!-- So header for some reason has container-type: inline-size applied to
+      it, which decouples it's size from it's children, even when it's explicitly a block.
+
+      This is for @container css rules that I don't even faintly understand.
+
+      Use container-type-normal to override this.
+      -->
 <div
 	bind:this={ref}
 	data-slot="card-header"
