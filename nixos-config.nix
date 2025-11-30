@@ -15,7 +15,7 @@
   virtualisation.vmVariant = {
     virtualisation.forwardPorts = [
       { from = "host"; host.port = 8080; guest.port = 80; }
-      { from = "host"; host.port = 8337; guest.port = 1337; }
+      { from = "host"; host.port = 8081; guest.port = 1337; }
       #{ from = "host"; host.port = 8022; guest.port = 22; }
     ];
     #services.openssh.enable = true;
@@ -30,8 +30,11 @@
 
   environment.systemPackages = with pkgs; [
     vim 
+    (pkgs.writeShellScriptBin "migrate-web-server" ''
+      ${pkgs.nodejs}/bin/npm run db:migrate --prefix ${web-server}
+    '')
   ];
-  networking.firewall.allowedTCPPorts = [ 22 80 ];
+  networking.firewall.allowedTCPPorts = [ 22 80 1337 ];
   services.postgresql = {
     enable = true;
     ensureDatabases = [ "mydb" "strapi" ];

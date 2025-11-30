@@ -1,5 +1,9 @@
 
 
+Next is I think getting a look at amber's excel stuff to see what she's actually
+using?
+- She isn't checking the supplies every day.
+
 You need Square Appointments Plus to cancel bookings programatically
 or send confirmations using square.
 

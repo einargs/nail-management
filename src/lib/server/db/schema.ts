@@ -3,9 +3,10 @@ import { boolean, date, timestamp, integer, pgTable, text, uuid } from "drizzle-
 
 export const user = pgTable('user', {
   id: text('id').primaryKey(),
-  age: integer('age'),
+  strapiId: integer().notNull().unique(),
+  // This is also the strapi username
   username: text('username').notNull().unique(),
-  passwordHash: text('password_hash').notNull()
+  //passwordHash: text('password_hash').notNull()
 });
 
 export const session = pgTable('session', {

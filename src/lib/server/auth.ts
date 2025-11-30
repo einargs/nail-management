@@ -1,4 +1,5 @@
 import type { RequestEvent } from '@sveltejs/kit';
+import { encodeBase32LowerCase } from '@oslojs/encoding';
 import { eq } from 'drizzle-orm';
 import { sha256 } from '@oslojs/crypto/sha2';
 import { encodeBase64url, encodeHexLowerCase } from '@oslojs/encoding';
@@ -6,6 +7,7 @@ import { db } from '$lib/server/db';
 import * as table from '$lib/server/db/schema';
 import { redirect } from '@sveltejs/kit';
 import { getRequestEvent } from '$app/server';
+import * as strapi from "$lib/server/strapi";
 
 const DAY_IN_MS = 1000 * 60 * 60 * 24;
 
@@ -93,8 +95,56 @@ export function requireLogin() {
   let locals = getRequestEvent().locals;
 
   if (!locals.user) {
-    return redirect(302, '/login');
+    return redirect(302, '/admin/login');
   }
 
   return locals.user;
+}
+
+function generateUserId() {
+  // ID with 120 bits of entropy, or about the same as UUID v4.
+  const bytes = crypto.getRandomValues(new Uint8Array(15));
+  const id = encodeBase32LowerCase(bytes);
+  return id;
+}
+
+async function createNewUser(strapiId: number, username: string): Promise<table.User> {
+  console.log("Creating new user", username, "strapi id", strapiId);
+  const userId = generateUserId();
+
+  let newUser = { id: userId, username, strapiId };
+  
+  await db
+    .insert(table.user)
+    .values(newUser);
+  return newUser;
+}
+
+/// Returns null if the strapi login had bad username/password.
+/// Will also create the user if the corresponding strapi user
+/// already exists.
+export async function strapiLogin(event: RequestEvent, identifier: string, password: string): Promise<null | table.User> {
+  let strapiLogin = await strapi.login(identifier, password);
+  console.log("Strapi login", strapiLogin);
+
+  if (strapiLogin === null) return null;
+
+  const results = await db
+    .select()
+    .from(table.user)
+    .where(eq(table.user.strapiId, strapiLogin.user.id));
+
+  const existingUser = results.at(0);
+  let user: table.User;
+
+  if (!existingUser) {
+    user = await createNewUser(strapiLogin.user.id, strapiLogin.user.username);
+  } else {
+    user = existingUser;
+  }
+  
+  const sessionToken = generateSessionToken();
+  const session = await createSession(sessionToken, user.id);
+  setSessionTokenCookie(event, sessionToken, session.expiresAt);
+  return user;
 }

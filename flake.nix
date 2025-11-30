@@ -26,6 +26,10 @@
             '';
             initialDatabases = [
               {
+                name = "strapi";
+                #schemas = [ ./scripts/db.sql ];
+              }
+              {
                 name = "mydb";
                 #schemas = [ ./scripts/db.sql ];
               }
@@ -99,7 +103,7 @@
               "eslint.config.js"
           ];
           */
-          npmDepsHash = "sha256-qmiHkGUk11thaUBCYNMGxdTp9ZZgBfBUVUEgbKhRWeI=";
+          npmDepsHash = "sha256-KKnvzIhe8/vu4rQzbzqo+1MBl/Lm4A2n/HQ5e1SHVo0=";
           #npmPackFlags = [ "--ignore-scripts" ];
           buildPhase = ''
           export DATABASE_URL=postgresql://localhost:5432/mydb

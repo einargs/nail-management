@@ -1,4 +1,3 @@
-import { hash, verify } from '@node-rs/argon2';
 import { encodeBase32LowerCase } from '@oslojs/encoding';
 import { fail, redirect } from '@sveltejs/kit';
 import { eq } from 'drizzle-orm';
@@ -6,12 +5,17 @@ import * as auth from '$lib/server/auth';
 import { db } from '$lib/server/db';
 import * as table from '$lib/server/db/schema';
 import type { Actions, PageServerLoad } from './$types';
+import { message, superValidate, setError } from 'sveltekit-superforms';
+import { zod4 } from 'sveltekit-superforms/adapters';
+import * as schemas from "./formSchema";
 
 export const load: PageServerLoad = async (event) => {
   if (event.locals.user) {
-    return redirect(302, '/');
+    return redirect(302, '/admin');
   }
-  return {};
+  const loginForm = await superValidate({
+  }, zod4(schemas.loginSchema));
+  return {loginForm};
 };
 
 export const actions: Actions = {
@@ -25,6 +29,36 @@ export const actions: Actions = {
     return redirect(302, '/admin/login');
   },
   login: async (event) => {
+    console.log("login attempt");
+    const form = await superValidate(event.request, zod4(schemas.loginSchema));
+    if (!form.valid) return fail(400, { loginForm: form });
+
+    try {
+      let user = await auth.strapiLogin(
+        event,
+        form.data.username,
+        form.data.password);
+      if (user === null) {
+        return message(form, 'Incorrect username or password', {
+          status: 403
+        });
+      }
+    } catch (error) {
+      console.error(error);
+      return message(form, 'A server error has occurred', {
+        status: 500
+      });
+    }
+
+    return redirect(302, '/admin');
+  },
+    /*
+import { hash, verify } from '@node-rs/argon2';
+  login: async (event) => {
+    // TODO: to connect with the strapi just make something that
+    // fetches like the user document or something unimportant?
+    // Or write a custom plugin with an endpoint that confirms
+    // the authentication token.
     const formData = await event.request.formData();
     const username = formData.get('username');
     const password = formData.get('password');
@@ -61,11 +95,8 @@ export const actions: Actions = {
       return fail(400, { message: 'Incorrect username or password' });
     }
 
-    const sessionToken = auth.generateSessionToken();
-    const session = await auth.createSession(sessionToken, existingUser.id);
-    auth.setSessionTokenCookie(event, sessionToken, session.expiresAt);
 
-    return redirect(302, '/');
+    return redirect(302, '/admin');
   },
   register: async (event) => {
     const formData = await event.request.formData();
@@ -101,17 +132,12 @@ export const actions: Actions = {
       console.error(error);
       return fail(500, { message: 'An error has occurred' });
     }
-    return redirect(302, '/');
+    return redirect(302, '/admin');
   }
+  */
 };
 
-function generateUserId() {
-  // ID with 120 bits of entropy, or about the same as UUID v4.
-  const bytes = crypto.getRandomValues(new Uint8Array(15));
-  const id = encodeBase32LowerCase(bytes);
-  return id;
-}
-
+/*
 function validateUsername(username: unknown): username is string {
   return (
     typeof username === 'string' &&
@@ -128,3 +154,4 @@ function validatePassword(password: unknown): password is string {
     password.length <= 255
   );
 }
+*/

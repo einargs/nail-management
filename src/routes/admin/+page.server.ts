@@ -48,20 +48,15 @@ export const load: PageServerLoad = async () => {
   });
   let hairColor = services.items![0];
   */
-  try {
-    const res = await strapi.getHomePage();
-    console.log(res);
-  } catch (e) {
-    console.error("strapi error", e);
-  }
 
-  return { user, clients, items, addClientForm, addItemForm, updateItemForm,   };
+  return { user, clients, items, addClientForm, addItemForm, updateItemForm, };
 };
 
 
 export const actions: Actions = {
   // you need the square plus to cancel bookings or send reminders
   addBooking: async (event) => {
+    await strapi.login("test@test.com", `pass`);
     /*
     let services = await square.catalog.searchItems({
       productTypes: [ "APPOINTMENTS_SERVICE" ]

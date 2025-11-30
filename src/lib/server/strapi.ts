@@ -101,5 +101,72 @@ async function getSinglePage<T extends z.ZodTypeAny>(endpoint: string, parser: T
   }
 }
 
+const LoginError = z.object({
+  status: z.number(),
+  name: z.string(),
+  message: z.string(),
+});
+
+const LoginRes = z.object({
+  jwt: z.string(),
+  user: z.object({
+    //...docShared,
+    id: z.number(),
+    username: z.string(),
+    email: z.string(),
+  }),
+});
+
+// returns null if the error is a validation error.
+//
+// identifier can be the email or username for strapi.
+//
+// You can't login as a super admin account through the API?
+// No, the super admin account isn't even a normal account.
+export async function login(identifier: string, password: string): Promise<z.infer<typeof LoginRes> | null> {
+  let res = await fetch(`${env.STRAPI_URL}/api/auth/local`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      identifier, password 
+    })
+  });
+  let body = await res.json();
+  if (body.error) {
+    try {
+      let errorBody = LoginError.parse(body.error);
+      if (errorBody.name === "ValidationError") {
+        return null;
+      }
+      return Promise.reject(Error(`login endpoint error ${errorBody.name}: ${errorBody.message}`));
+    } catch {
+      throw Error("Unknown error response from login endpoint");
+    }
+  } else {
+    try {
+      let res = LoginRes.parse(body);
+      return res;
+    } catch {
+      throw Error("Unknown login endpoint response");
+    }
+  }
+}
+/*
+let res = await fetch("http://localhost:1337/api/auth/local/register", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    username: "test",
+    email: "test@test.com",
+    password: "pass"
+  })
+});
+console.log("REGISTER", await res.text());
+*/
+
 export const getHomePage = () => getSinglePage("home-page", HomePageData);
 export const getServices = () => getSinglePage("services", z.array(Service));

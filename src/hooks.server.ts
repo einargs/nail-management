@@ -6,7 +6,7 @@ import { runMigration } from "$lib/server/db";
 
 const init: ServerInit = async () => {
   // We are programatically applying the migrations when the server starts.
-  await runMigration();
+  //await runMigration();
 };
 
 const handleAuth: Handle = async ({ event, resolve }) => {
