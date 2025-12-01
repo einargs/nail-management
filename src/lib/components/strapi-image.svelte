@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { StrapiImage } from "$lib/server/strapi";
+  import * as common from "$lib/common";
 
   let {
     image,
@@ -15,7 +16,7 @@
 </script>
 
 <img
-  src={`http://localhost:1337${format.url}`}
+  src={`${common.strapiURL}${format.url}`}
   alt={image.alternativeText}
   width={format.width}
   height={format.height}

@@ -15,7 +15,9 @@
   virtualisation.vmVariant = {
     virtualisation.forwardPorts = [
       { from = "host"; host.port = 8080; guest.port = 80; }
-      { from = "host"; host.port = 8081; guest.port = 1337; }
+      { from = "host"; host.port = 8433; guest.port = 433; }
+      { from = "host"; host.port = 8180; guest.port = 1080; }
+      { from = "host"; host.port = 8337; guest.port = 1337; }
       #{ from = "host"; host.port = 8022; guest.port = 22; }
     ];
     #services.openssh.enable = true;
@@ -25,6 +27,14 @@
     virtualisation.qemu.options = [
       "-nographic"
     ];
+    services.nginx = {
+      virtualHosts = {
+        "mynailseverywhere.com" = {
+          sslCertificateKey = "${./selfsigned.key}";
+          sslCertificate = "${./selfsigned.crt}";
+        };
+      };
+    };
   };
 
 
@@ -34,7 +44,51 @@
       ${pkgs.nodejs}/bin/npm run db:migrate --prefix ${web-server}
     '')
   ];
-  networking.firewall.allowedTCPPorts = [ 22 80 1337 ];
+  networking.firewall.allowedTCPPorts = [ 22 80 433 1337 ];
+
+  services.nginx = {
+    enable = true;
+    recommendedProxySettings = true;
+    recommendedTlsSettings = true;
+    # other Nginx options
+    virtualHosts."mynailseverywhere.com" =  {
+      #enableACME = true;
+      #forceSSL = true;
+      addSSL = true;
+      locations."/" = {
+        proxyPass = "http://0.0.0.0:1080";
+        proxyWebsockets = true; # needed if you need to use WebSocket
+        # extraConfig =
+        #   # required when the target is also TLS server with multiple hosts
+        #   "proxy_ssl_server_name on;" +
+        #   # required when the server wants to use HTTP Authentication
+        #   "proxy_pass_header Authorization;"
+        #   ;
+      };
+      # see:
+      # https://serverfault.com/questions/562756/how-to-remove-the-path-with-an-nginx-proxy-pass
+      # https://docs.nginx.com/nginx/admin-guide/web-server/reverse-proxy/
+      locations."/strapi" = {
+        return = "302 /strapi/";
+      };
+      # You have to match the trailing /, otherwise it'll end up with double //.
+      locations."/strapi/" = {
+        # The ending / is important; it means that the /strapi is stripped
+        # from the passed along request.
+        proxyPass = "http://0.0.0.0:1337/";
+        proxyWebsockets = true; # needed if you need to use WebSocket
+      };
+    };
+};
+
+  security.acme = {
+    # Accept the CA’s terms of service. The default provider is Let’s Encrypt, you can find their ToS at https://letsencrypt.org/repository/. 
+    #acceptTerms = true;
+    # Optional: You can configure the email address used with Let's Encrypt.
+    # This way you get renewal reminders (automated by NixOS) as well as expiration emails.
+    #defaults.email = "@address.com";
+  };
+
   services.postgresql = {
     enable = true;
     ensureDatabases = [ "mydb" "strapi" ];
@@ -111,10 +165,11 @@ DATABASE_SSL=false
       after = [ "network.target" ];       # Ensures network is available before starting
 
       environment = {
-        PORT="80";
+        PORT="1080";
         NODE_ENV="production";
         DATABASE_URL="postgresql://postgres:/mydb?host=/var/run/postgresql/";
-        STRAPI_URL="http://localhost:1337";
+        #STRAPI_URL="http://localhost:1337";
+        #PUBLIC_STRAPI_URL="mynailseverywhere.com/strapi";
       };
 
       serviceConfig = {

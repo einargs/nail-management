@@ -7,7 +7,14 @@ export default [
     name: "strapi::cors",
     config: {
       enabled: true,
-      origin: ['http://localhost:5173'], // Your SvelteKit dev server
+      origin: [
+        // Your SvelteKit dev server
+        'http://localhost:5173',
+        'http://localhost:80',
+        'http://localhost:8080',
+        'http://localhost:8180',
+        'https://localhost:8433',
+      ], 
     },
   },
   'strapi::poweredBy',

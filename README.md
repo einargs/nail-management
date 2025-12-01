@@ -36,3 +36,39 @@ npm run build
 You can preview the production build with `npm run preview`.
 
 > To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+
+## Setting up VM
+make a `/home/test/public/uploads` directory.
+
+web-server.env
+```
+DATABASE_URL=postgresql://postgres@/mydb?host=/var/run/postgresql/
+
+PORT=1080
+STRAPI_TOKEN=
+STRAPI_URL=http://0.0.0.0:1337
+PUBLIC_STRAPI_URL=/strapi
+
+SQUARE_APP_ID=
+SQUARE_API_ACCESS_TOKEN=
+SQUARE_LOCATION_ID=
+```
+
+strapi-server.env
+```
+HOST=0.0.0.0
+PORT=1337
+STRAPI_PUBLIC_DIR="/home/test/public"
+
+# Secrets
+APP_KEYS=
+API_TOKEN_SALT=
+ADMIN_JWT_SECRET=
+TRANSFER_TOKEN_SALT=
+ENCRYPTION_KEY=
+
+# Database
+DATABASE_CLIENT=postgres
+STRAPI_DATABASE_URL=postgres://postgres@/strapi?host=/var/run/postgresql/
+JWT_SECRET=
+```

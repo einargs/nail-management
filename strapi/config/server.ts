@@ -4,4 +4,7 @@ export default ({ env }) => ({
   app: {
     keys: env.array('APP_KEYS'),
   },
+  dirs: {
+    public: env("STRAPI_PUBLIC_DIR", "./public")
+  }
 });

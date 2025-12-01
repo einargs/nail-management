@@ -6,15 +6,19 @@
     systems.url = "github:nix-systems/default";
     process-compose-flake.url = "github:Platonic-Systems/process-compose-flake";
     services-flake.url = "github:juspay/services-flake";
-
+    globset = {
+      url = "github:pdtpartners/globset";
+      inputs.nixpkgs-lib.follows = "nixpkgs";
+    };
   };
-  outputs = { self, flake-parts, nixpkgs, ...}@inputs:
+  outputs = { self, flake-parts, nixpkgs, globset, ...}@inputs:
     flake-parts.lib.mkFlake { inherit inputs; } {
       imports = [
         inputs.process-compose-flake.flakeModule
       ];
       systems = import inputs.systems;
       perSystem = {self', config, pkgs, lib, system, ...}: {
+        # DEV SERVER
         process-compose."dev-server" = {
           imports = [
             inputs.services-flake.processComposeModules.default
@@ -63,60 +67,80 @@
             depends_on."pg1".condition = "process_healthy";
           };
         };
-        # For testing you can use ENV_PATH to point to the .env file
-        packages.strapi-server = pkgs.buildNpmPackage {
-          pname = "strapi-server";
-          version = "0.0.1";
-          src = ./strapi;
-          npmDepsHash = "sha256-R+V6KEw/9YnqVil2t/6mXDQgAEUBOARdGRDylC0BIDE=";
-          npmFlags = [ "--legacy-peer-deps" ];
-          installPhase = ''
-            mkdir -p $out
-            cp -r * $out/
-          '';
-        };
-        packages.web-server = pkgs.buildNpmPackage {
-          pname = "web-server";
-          version = "0.0.1";
-          src = lib.sources.cleanSourceWith {
-            src = lib.sources.cleanSourceWith {
-              src = ./.;
-              filter = lib.sources.cleanSourceFilter;
-            };
-            filter = path: type: !(builtins.any
-              (suffix: lib.strings.hasSuffix suffix path)
-              ["flake.nix" "flake.lock"]);
 
+
+        ## PACKAGES
+        # For testing you can use ENV_PATH to point to the .env file
+        packages = let
+          # use fs.traceVal to debug
+          fs = lib.fileset;
+        in {
+          strapi-server = pkgs.buildNpmPackage {
+            pname = "strapi-server";
+            version = "0.0.1";
+            src = fs.toSource {
+              root = ./strapi;
+              fileset = (globset.lib.globs ./strapi [
+                "package-lock.json"
+                "package.json"
+                "favicon.png"
+                "server.js"
+                "tsconfig.json"
+                "src/**/*"
+                "types/**/*"
+                "config/**/*"
+                "database/**/*"
+              ]);
+            };
+            npmDepsHash = "sha256-R+V6KEw/9YnqVil2t/6mXDQgAEUBOARdGRDylC0BIDE=";
+            npmFlags = [ "--legacy-peer-deps" ];
+            installPhase = ''
+              mkdir -p $out
+              cp -r * $out/
+            '';
           };
-          # I need to get the filtering right
-          /*
-          src = lib.sources.sourceByRegex ./. [
-            #exclude = [ "node_modules" "build" "result" "flake.nix" "flake.lock" "strapi" "data" "*.qcow2" ];
-              "src/*"
-              "static/*"
-              "drizzle.config.ts"
-              "package.json"
-              "package-lock.json"
-              "vite.config.ts"
-              "tsconfig.json"
-              "components.json"
-              "eslint.config.js"
-          ];
-          */
-          npmDepsHash = "sha256-KKnvzIhe8/vu4rQzbzqo+1MBl/Lm4A2n/HQ5e1SHVo0=";
-          #npmPackFlags = [ "--ignore-scripts" ];
-          buildPhase = ''
-          export DATABASE_URL=postgresql://localhost:5432/mydb
-          npm run build
-          '';
-          # I could shave this using stuff mentioned in
-          # https://svelte.dev/docs/kit/adapter-node
-          installPhase = ''
-            mkdir -p $out
-            cp -r * $out/
-          '';
-          #dontNpmBuild = true;
+          web-server = pkgs.buildNpmPackage {
+            pname = "web-server";
+            version = "0.0.1";
+            src = fs.toSource {
+              root = ./.;
+              fileset = (globset.lib.globs ./. [
+                "selfsigned.crt"
+                "selfsigned.key"
+                "src/**/*"
+                "static/**/*"
+                "migrations/**/*"
+                "package.json"
+                "package-lock.json"
+                "svelte.config.js"
+                "drizzle.config.ts"
+                "vite.config.ts"
+                "tsconfig.json"
+                "components.json"
+                "eslint.config.js"
+
+              ]);
+            };
+            npmDepsHash = "sha256-KKnvzIhe8/vu4rQzbzqo+1MBl/Lm4A2n/HQ5e1SHVo0=";
+            #npmFlags = [ "--legacy-peer-deps" ];
+            #npmPackFlags = [ "--ignore-scripts" ];
+            buildPhase = ''
+            # Necessary, even if the database isn't running
+            export DATABASE_URL=postgresql://localhost:5432/mydb
+            npm run build
+            '';
+            # I could shave this using stuff mentioned in
+            # https://svelte.dev/docs/kit/adapter-node
+            installPhase = ''
+              mkdir -p $out
+              cp -r ./* $out/
+            '';
+            #dontNpmBuild = true;
+          };
         };
+
+
+        ## DEV SHELLS
         devShells.default = with pkgs; mkShell {
           # To run commands interacting with the database, just do so from a
           # different terminal; the services aren't isolated.
@@ -147,6 +171,8 @@
           ];
         };
       };
+
+      ## VM CONFIG
       # To deploy we're going to have a nixos config
       # nixos-rebuild build-vm --flake .#prod-server --show-trace
       # ./result/bin/run-nixos-vm

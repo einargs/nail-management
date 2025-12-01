@@ -1,4 +1,6 @@
 
+BEFORE DEPLOY:
+- automatic restarts via systemctl
 
 Next is I think getting a look at amber's excel stuff to see what she's actually
 using?

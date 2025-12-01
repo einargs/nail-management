@@ -113,7 +113,7 @@
           <Card.Content class="flex flex-col lg:flex-row content-start justify-start">
             <StrapiImage
               image={service.image}
-              class="max-sm:w-full sm:w-[400px] max-sm:h-auto sm:h-[200px]"
+              class="max-sm:w-full sm:w-[400px] max-sm:h-auto"
             />
             <p class="max-lg:py-6 lg:pl-6">{service.description}</p>
           </Card.Content>

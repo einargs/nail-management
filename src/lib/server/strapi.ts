@@ -82,7 +82,7 @@ const client = () => strapi({
   baseURL: `${env.STRAPI_URL}/api`,
   // Okay, for some reason the full access token doesn't work
   // but this read only token does??
-  auth: env.STRAPI_READ_TOKEN,
+  auth: env.STRAPI_TOKEN,
 });
 
 async function getSinglePage<T extends z.ZodTypeAny>(endpoint: string, parser: T): Promise<z.infer<T>> {
