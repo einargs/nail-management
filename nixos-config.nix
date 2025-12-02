@@ -10,13 +10,30 @@ in
   boot.loader.systemd-boot.enable = true;
 
   boot.loader.efi.canTouchEfiVariables = true;
-  users.users.test = {
+
+  services.openssh = {
+    enable = true;
+    # require public key authentication for better security
+    settings.PasswordAuthentication = false;
+    settings.KbdInteractiveAuthentication = false;
+    #settings.PermitRootLogin = "yes";
+  };
+
+  users.users."einargs" = {
     isNormalUser = true;
     extraGroups = [ "wheel" ];
-    initialPassword = "test";
-  };
+    openssh.authorizedKeys.keys = [
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIG9NLl3JImsJWUh75h8I/Fk34F2hJLtWhu+vdP5QyEih einargs"
+    ];
+  }
+
   # Should only be used by the local nixos build-vm script.
   virtualisation.vmVariant = {
+    users.users.test = {
+      isNormalUser = true;
+      extraGroups = [ "wheel" ];
+      initialPassword = "test";
+    };
     virtualisation.forwardPorts = [
       { from = "host"; host.port = 8080; guest.port = 80; }
       { from = "host"; host.port = 8433; guest.port = 433; }
