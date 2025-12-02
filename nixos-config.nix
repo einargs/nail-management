@@ -1,6 +1,9 @@
 { pkgs, strapi-server, web-server, ... }:
 
 
+let
+  enable-redis = false;
+in
 {
   system.stateVersion = "25.05";
 
@@ -12,6 +15,7 @@
     extraGroups = [ "wheel" ];
     initialPassword = "test";
   };
+  # Should only be used by the local nixos build-vm script.
   virtualisation.vmVariant = {
     virtualisation.forwardPorts = [
       { from = "host"; host.port = 8080; guest.port = 80; }
@@ -30,6 +34,7 @@
     services.nginx = {
       virtualHosts = {
         "mynailseverywhere.com" = {
+          addSSL = true;
           sslCertificateKey = "${./selfsigned.key}";
           sslCertificate = "${./selfsigned.crt}";
         };
@@ -40,6 +45,7 @@
 
   environment.systemPackages = with pkgs; [
     vim 
+    htop
     (pkgs.writeShellScriptBin "migrate-web-server" ''
       ${pkgs.nodejs}/bin/npm run db:migrate --prefix ${web-server}
     '')
@@ -54,7 +60,7 @@
     virtualHosts."mynailseverywhere.com" =  {
       #enableACME = true;
       #forceSSL = true;
-      addSSL = true;
+      #addSSL = true;
       locations."/" = {
         proxyPass = "http://0.0.0.0:1080";
         proxyWebsockets = true; # needed if you need to use WebSocket
@@ -102,7 +108,7 @@
   # Service is still called redis
   # This is the default instance.
   services.redis.servers."" = {
-    enable = true;
+    enable = enable-redis;
     port = 6379;
   };
   # journalctl -u <service-name> for logs
@@ -158,9 +164,8 @@ DATABASE_SSL=false
       description = "Production Server";
       requires = [
         "postgresql.service"
-        "redis.service"
         "strapi-server.service"
-      ];
+      ] ++ (if enable-redis then [ "redis.service" ] else []);
       wantedBy = [ "multi-user.target" ]; # Ensures the service starts with the system
       after = [ "network.target" ];       # Ensures network is available before starting
 

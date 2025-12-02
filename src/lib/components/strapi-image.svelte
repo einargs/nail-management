@@ -4,10 +4,12 @@
 
   let {
     image,
-    class: className
+    class: className,
+    loading
   }: {
     image: StrapiImage,
     class: string
+    loading?: string
   } = $props();
 
   // TODO: set up the breakpoints for the srcset and sizes stuff
@@ -17,6 +19,7 @@
 
 <img
   src={`${common.strapiURL}${format.url}`}
+  loading={loading}
   alt={image.alternativeText}
   width={format.width}
   height={format.height}

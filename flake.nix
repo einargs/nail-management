@@ -10,13 +10,64 @@
       url = "github:pdtpartners/globset";
       inputs.nixpkgs-lib.follows = "nixpkgs";
     };
+    nixos-generators = {
+      url = "github:nix-community/nixos-generators";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
-  outputs = { self, flake-parts, nixpkgs, globset, ...}@inputs:
-    flake-parts.lib.mkFlake { inherit inputs; } {
+  outputs = { self, flake-parts, nixpkgs, globset, nixos-generators, ...}@inputs:
+    let
+      ## VM CONFIG
+      # Currently the images for google cloud aren't working.
+      # instead I'm just going to use nixos-infect and then
+      # nixos-rebuild from inside of that.
+      vm-images = let
+        system = "x86_64-linux";
+        specialArgs = {
+          inherit (self.packages.${system}) strapi-server web-server;
+        };
+        gcloud-ec2-micro-disk = {
+          # set disk size to to 10G
+          virtualisation.diskSize = 10 * 1024;
+        }
+        base-modules = [
+          {
+            nix.registry.nixpkgs.flake = nixpkgs;
+          }
+          ./nixos-config.nix
+        ];
+      in {
+        nixosConfigurations = {
+          # nixos-rebuild build-vm --flake .#prod-server --show-trace
+          # ./result/bin/run-nixos-vm
+          prod-server = nixpkgs.lib.nixosSystem {
+            inherit system specialArgs;
+            modules = base-modules;
+          };
+          # https://github.com/nix-community/nixos-generators
+          # nix build .#nixosConfigurations.gcloud-server.config.formats.gce
+          gcloud-server = nixpkgs.lib.nixosSystem {
+            inherit system specialArgs;
+            modules = base-modules ++ [
+              nixos-generators.nixosModules.all-formats
+              gcloud-ec2-micro-disk
+            ];
+          };
+        };
+        gcloud-package = nixos-generators.nixosGenerate {
+          inherit system specialArgs;
+          format = "raw";
+          modules = base-modules ++ [ gcloud-ec2-micro-disk ];
+        };
+      };
+    in flake-parts.lib.mkFlake { inherit inputs; } {
       imports = [
         inputs.process-compose-flake.flakeModule
       ];
       systems = import inputs.systems;
+
+      flake.nixosConfigurations = vm-images.nixosConfigurations;
+
       perSystem = {self', config, pkgs, lib, system, ...}: {
         # DEV SERVER
         process-compose."dev-server" = {
@@ -40,7 +91,7 @@
             ];
           };
           services.redis."r1" = {
-            enable = true;
+            #enable = true;
             port = 6379;
             #unixSocket = "./redis.sock";
           };
@@ -63,7 +114,7 @@
             };
             # depending on the strapi server makes it never start?
             #depends_on."strapi-dev-server".condition = "process_healthy";
-            depends_on."r1".condition = "process_healthy";
+            #depends_on."r1".condition = "process_healthy";
             depends_on."pg1".condition = "process_healthy";
           };
         };
@@ -75,6 +126,7 @@
           # use fs.traceVal to debug
           fs = lib.fileset;
         in {
+          gcloud-vm = vm-images.gcloud-package;
           strapi-server = pkgs.buildNpmPackage {
             pname = "strapi-server";
             version = "0.0.1";
@@ -157,6 +209,10 @@
               ${pkgs.nodejs}/bin/npm run start --prefix ${strapi-server}
             '')
             */
+            (pkgs.google-cloud-sdk.withExtraComponents
+              (with pkgs.google-cloud-sdk.components; [
+                gke-gcloud-auth-plugin
+              ]))
             prefetch-npm-deps
             nodePackages.typescript-language-server
             firebase-tools
@@ -170,23 +226,9 @@
             openssl
           ];
         };
+
       };
 
-      ## VM CONFIG
-      # To deploy we're going to have a nixos config
-      # nixos-rebuild build-vm --flake .#prod-server --show-trace
-      # ./result/bin/run-nixos-vm
-      flake.nixosConfigurations.prod-server = let 
-        system = "x86_64-linux";
-      in nixpkgs.lib.nixosSystem {
-        inherit system;
-        specialArgs = {
-          inherit (self.packages.${system}) strapi-server web-server;
-        };
-        modules = [
-          ./nixos-config.nix
-        ];
-      };
     };
 
 

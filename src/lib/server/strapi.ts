@@ -68,6 +68,12 @@ const HomePageData = z.object({
 
 export type HomePageData = z.infer<typeof HomePageData>;
 
+const GalleryPageData = z.object({
+  images: z.preprocess((val) => val === null ? [] : val, z.array(Image)),
+});
+
+export type GalleryPageData = z.infer<typeof GalleryPageData>;
+
 const Service = z.object({
   title: z.string(),
   description: z.string(),
@@ -80,9 +86,8 @@ const Service = z.object({
 // and throws an error because bad auth.
 const client = () => strapi({
   baseURL: `${env.STRAPI_URL}/api`,
-  // Okay, for some reason the full access token doesn't work
-  // but this read only token does??
-  auth: env.STRAPI_TOKEN,
+  // I'm pretty sure a newline is getting caught
+  auth: env.STRAPI_TOKEN.trim(),
 });
 
 async function getSinglePage<T extends z.ZodTypeAny>(endpoint: string, parser: T): Promise<z.infer<T>> {
@@ -100,6 +105,10 @@ async function getSinglePage<T extends z.ZodTypeAny>(endpoint: string, parser: T
     throw Error(`failed to parse strapi ${endpoint} response: ${error}.`);
   }
 }
+
+export const getHomePage = () => getSinglePage("home-page", HomePageData);
+export const getGalleryPage = () => getSinglePage("gallery-page", GalleryPageData);
+export const getServices = () => getSinglePage("services", z.array(Service));
 
 const LoginError = z.object({
   status: z.number(),
@@ -167,6 +176,3 @@ let res = await fetch("http://localhost:1337/api/auth/local/register", {
 });
 console.log("REGISTER", await res.text());
 */
-
-export const getHomePage = () => getSinglePage("home-page", HomePageData);
-export const getServices = () => getSinglePage("services", z.array(Service));
