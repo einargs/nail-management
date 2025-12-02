@@ -29,7 +29,7 @@
         gcloud-ec2-micro-disk = {
           # set disk size to to 10G
           virtualisation.diskSize = 10 * 1024;
-        }
+        };
         base-modules = [
           {
             nix.registry.nixpkgs.flake = nixpkgs;

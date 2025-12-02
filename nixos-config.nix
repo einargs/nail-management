@@ -25,7 +25,7 @@ in
     openssh.authorizedKeys.keys = [
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIG9NLl3JImsJWUh75h8I/Fk34F2hJLtWhu+vdP5QyEih einargs"
     ];
-  }
+  };
 
   # Should only be used by the local nixos build-vm script.
   virtualisation.vmVariant = {
